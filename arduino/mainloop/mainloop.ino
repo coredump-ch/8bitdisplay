@@ -1,87 +1,67 @@
-
-//General constants
-#define MUXDELAY 10
-#define SERIALTIMEOUT 1000;
-
-//Pin mappings for the digits
-#define DIGIT_1 1
-#define DIGIT_2 2
-#define DIGIT_3 3
-#define DIGIT_4 4
-#define DIGIT_5 5
-#define DIGIT_6 6
-#define DIGIT_7 7
-#define DIGIT_8 8
-
-//Pin mappings for the 74hc164 multiplexer (7 Segment + point multiplexing)
-#define DATA 2
-#define CLOCK 3
+#include "LedControl.h"
+#define DIN 11
+#define CS 12
+#define CLOCK 13
 
 /*
 Segment numbering:
-       1
+       7
     --------
    |        |
- 3 |        | 2
-   |    4   |
+ 2 |        | 6
+   |    1   |
     --------
    |        |
- 6 |        | 5
+ 3 |        | 5
    |        |
     --------   . 8
-       7
- 
- To display a one "1", you need to light up segments 2,5 => in binary: 0b01001000
- */
+       4
+	   
+	   
+To display a one "1", you need to light up segments 5,6 => in binary: 0b00110000
+*/
 
-//8bit Demo String
-byte eight_bit[8] = {
-  0b11111110,
-  0b00111110,
-  0b00000100,
-  0b00110100
-};
-
+LedControl lc = LedControl(DIN,CLOCK,CS,1); 
 char display_buffer[8];
-char digit_pins[] = {
-  DIGIT_1,DIGIT_2,DIGIT_3,DIGIT_4,DIGIT_5,DIGIT_6,DIGIT_7,DIGIT_8};
 
-void setup() {                
-  pinMode(CLOCK, OUTPUT);
-  pinMode(CLEAR,OUTPUT);
-  digitalWrite(CLEAR,HIGH);
-  pinMode(DATA , OUTPUT);
-  for(int n=0; n<8;++n){
-    pinMode(digit_pins[n],OUTPUT);
-    digitalWrite(digit_pins[n],LOW);
-  }
+void setup(){
+  lc.shutdown(0,false);
+  lc.setIntensity(0,8);
   Serial.begin(9600);
-  Serial.println("8bit Display is ready!");
 }
 
-// the loop runs over and over again forever:
-void loop() {
-  if(Serial.available()==8){
-    Serial.readBytes(display_buffer,8);
-    Serial.print("New string received: ");
-    printBuffer();
+void loop(){
+  print8bit();
+  delay(300);
+  Serial.println("8bit Display is ready!");
+  while(1){
+    if(Serial.available()>=8){
+      Serial.readBytes(display_buffer,8);
+      Serial.print("New string received: ");
+      printBuffer();
+    }
   }
-  
-   for(byte n=0; n<8;++n){
-    shiftOut(DATA, CLOCK, LSBFIRST, display_buffer[n]);
-    digitalWrite(digit_pins[n],HIGH);
-    delay(MUXDELAY);
-    digitalWrite(digit_pins[n],LOW);
-  }
+}
 
+void print8bit(){
+  lc.setDigit(0,7,8,false);
+  lc.setRow(0,6,0b000011111);
+  lc.setRow(0,5,0b100);
+  lc.setRow(0,4,0b111);
+  lc.setRow(0,3,0x00);
+  lc.setRow(0,2,0b000011111);
+  lc.setDigit(0,1,0xa,false);
+  lc.setRow(0,0,0b101);
 }
 
 void printBuffer(){
-  for(int i=0;i<8;++i){
-    Serial.print(display_buffer[i]);
+  for(int i =7; i>=0; --i){
+    lc.setRow(0,i,display_buffer[7-i]);
+    Serial.write(display_buffer[7-i]);
   }
-  Serial.println();
 }
+
+
 
 
 
