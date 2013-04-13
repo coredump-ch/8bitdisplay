@@ -6,19 +6,24 @@ Prints out the current count of button presses after successful increment
 
 import shelve
 import sys
+import time
+import RPi.GPIO as GPIO
 
 
-class Button:
+class Button(object):
+    INPUT_GPIO_PIN = 23
+
     def __init__(self):
-        pass
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.INPUT_GPIO_PIN, GPIO.IN)
 
     def read(self):
         """Reads Button state, do not forget to debounce..."""
-        print "Please give input"
-        reading = sys.stdin.readline()
-        if 'on' in reading:
-            return True
-        return False
+        input_vals = []
+        for i in xrange(5):
+            input_vals.append(GPIO.input(self.INPUT_GPIO_PIN))
+            time.sleep(0.01)
+        return sum(input_vals) == 5
 
 
 filename = 'db.dat'
@@ -28,15 +33,15 @@ if not 'count' in d:
 button = Button()
 
 while True:
-    button_input = button.read()
-    if button_input is True:
-        #Rising Edge
-        d['count'] = int(d['count']) + 1
-        if d['count'] == 256:
-            d['count'] = 0
-
+    if button.read():
+        # Await falling edge
         while button.read() is True:
             print 'awaiting falling edge'
             pass
-        d.sync()
-        print 'count is ' + str(d['count'])
+
+        d['count'] = int(d['count']) + 1
+        if d['count'] >= 256:
+            d['count'] = 0
+
+        d.sync()  # Make sure shelve is synced
+        print 'count is %s' % d['count']
