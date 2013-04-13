@@ -1,7 +1,27 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, division, absolute_import
 import time
 import serial
 from collections import deque
+from itertools import islice
+
+
+class Segments(object):
+    MID = 1
+    NW = 2
+    SW = 4
+    S = 8
+    SE = 16
+    NE = 32
+    N = 64
+    DOT = 128
+
+
+class Shapes(object):
+    TOP_CIRCLE = Segments.MID | Segments.NW | Segments.N | Segments.NE
+    BOTTOM_CIRCLE = Segments.MID | Segments.SW | Segments.S | Segments.SE
+    LEFT_BAR = Segments.NW | Segments.SW
+    RIGHT_BAR = Segments.NE | Segments.SE
 
 
 class SevenSegmentDisplay(object):
@@ -18,7 +38,7 @@ class SevenSegmentDisplay(object):
          |     |
           -----   . 8
             4
-     
+
     To display one "1", you need to light up segments 2,5 => in binary: 0b01001000
 
     """
@@ -28,11 +48,12 @@ class SevenSegmentDisplay(object):
         '8': '01111111', '9': '01110011', 'a': '01110111', 'b': '00011111',
         'c': '00001101', 'C': '01001110', 'd': '00111101', 'e': '01001111',
         'f': '01000111', 'g': '01111011', 'h': '00010111', 'H': '00110111',
-        'i': '00000100', 'I': '00000110', 'j': '00111000', 'l': '00001110',
-        'm': '00000000', 'n': '00010101', 'o': '00011101', 'O': '01111110',
-        'p': '01100111', 'q': '01110011', 'r': '00000101', 's': '01011011',
-        't': '00001111', 'u': '00011100', 'U': '00111110', 'y': '00110011',
-        'z': '01101101', ' ': '00000000', '.': '10000000',
+        'i': '00000100', 'I': '00000110', 'j': '00111000', 'k': '00001101',
+        'l': '00001110', 'm': '00000000', 'n': '00010101', 'o': '00011101',
+        'O': '01111110', 'p': '01100111', 'q': '01110011', 'r': '00000101',
+        's': '01011011', 't': '00001111', 'u': '00011100', 'U': '00111110',
+        'y': '00110011', 'z': '01101101', ' ': '00000000', '.': '10000000',
+        '-': '00000001', '_': '00001000', '=': '00001001',
     }
 
     def __init__(self, device='/dev/ttyUSB0', digits=8):
@@ -53,9 +74,9 @@ class SevenSegmentDisplay(object):
         """Write frames to the display. If there are less frames than digits,
         "blank" digits will be appended on the right side."""
 
-        print frames
+        print(frames)
 
-        # Pad display with "blank digits" 
+        # Pad display with "blank digits"
         if len(frames) < self.digits:
             frames.extend([0] * (self.digits - len(frames)))
 
@@ -68,21 +89,22 @@ class SevenSegmentDisplay(object):
 
     def _convert_string(self, string):
         """Take a string as input, return frame."""
-        assert len(string) <= self.digits, 'Max string length: {}'.format(self.digits)
         frame = []
         for char in string:
             frame.append(self.get_char(char))
         return frame
 
     def write_string(self, string):
+        assert len(string) <= self.digits, 'Max string length: {}'.format(self.digits)
         frame = self._convert_string(string)
         self.write(frame)
 
     def rotate_string(self, string, delay=0.2):
         frame = deque(self._convert_string(string))
         while 1:
-            self.write(frame)
-            frame.rotate(1)
+            length = min(8, len(frame))
+            self.write(list(islice(frame, 0, length)))
+            frame.rotate(-1)
             time.sleep(delay)
 
     @classmethod
@@ -90,7 +112,7 @@ class SevenSegmentDisplay(object):
         if char in cls.CHAR_MAP:
             pattern = cls.CHAR_MAP[char]
         elif char.lower() in cls.CHAR_MAP:
-            pattern = cls.CHAR_MAP[char]
+            pattern = cls.CHAR_MAP[char.lower()]
         else:
             raise RuntimeError('Character mapping for "{}" not found.'.format(char))
-        return int(cls.CHAR_MAP[char], 2)
+        return int(pattern, 2)
