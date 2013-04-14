@@ -10,6 +10,7 @@ Options:
 
 """
 from __future__ import print_function, division, absolute_import
+import os
 import sys
 from docopt import docopt
 from sevensegment import SevenSegmentDisplay, Segments, Shapes
@@ -45,6 +46,11 @@ class SimpleAnimations(object):
 if __name__ == '__main__':
 
     args = docopt(__doc__, version='v0.0.1')
+    dev = args['--dev']
 
-    disp = SevenSegmentDisplay(device=args['--dev'], digits=8)
+    if not os.access(dev, os.W_OK):
+        print('Write access to {} not allowed. Run as root?'.format(dev))
+        sys.exit(os.EX_NOPERM)
+
+    disp = SevenSegmentDisplay(device=dev, digits=8)
     disp.rotate_string('8bit bar ')
