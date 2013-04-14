@@ -1,17 +1,23 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
 7 segment display main loop.
 
 Usage:
-    loop.py [--dev=<device>]
+    loop.py [--verbosity=<level>] [--dev=<device>]
 
 Options:
-    --dev=<device>  The USB device [default: /dev/ttyUSB0].
+    --dev=<device>       The USB device [default: /dev/ttyUSB0].
+    --verbosity=<level>  The log level (1=debug, 2=info, 3=warning, 4=error) [default: 2]
 
 """
 from __future__ import print_function, division, absolute_import
+
 import os
 import sys
+import logging
+from time import sleep
+
 from docopt import docopt
 from sevensegment import SevenSegmentDisplay, Segments, Shapes
 
@@ -43,14 +49,62 @@ class SimpleAnimations(object):
     ]
 
 
+def mainloop(disp, args):
+    logging.info('Entered main loop!')
+    while 1:
+        disp.write_string('8bit bar')
+        sleep(1)
+        disp.write_string('bier')
+        sleep(1)
+        disp.write_string('shots')
+        sleep(1)
+        disp.write_string('bits')
+        sleep(1)
+        disp.write_string('affen')
+        sleep(0.2)
+        disp.write_string('titten')
+        sleep(0.2)
+        disp.write_string('geil!')
+        sleep(1)
+
+        for frame in SimpleAnimations.circle * 3:
+            disp.write([frame]*8)
+            sleep(0.1)
+        for frame in SimpleAnimations.eight * 3:
+            disp.write([frame]*8)
+            sleep(0.1)
+        for frame in SimpleAnimations.doublecircle * 6:
+            disp.write([frame]*8)
+            sleep(0.1)
+
+        #disp.rotate_string('8bit bar ', repeat=2)
+        #disp.rotate_string('Affentittengeil! ', repeat=2)
+
+
 if __name__ == '__main__':
 
+    # Parse arguments
     args = docopt(__doc__, version='v0.0.1')
     dev = args['--dev']
 
+    # Check permissions
     if not os.access(dev, os.W_OK):
         print('Write access to {} not allowed. Run as root?'.format(dev))
         sys.exit(os.EX_NOPERM)
 
+    # Set log level
+    try:
+        loglevel = int(args['--verbosity']) * 10
+    except ValueError:
+        print('Invalid verbosity.')
+        sys.exit(os.EX_CONFIG)
+    logging.basicConfig(level=loglevel)
+
+    # Run main loop
+    logging.info('Initializing...')
     disp = SevenSegmentDisplay(device=dev, digits=8)
-    disp.rotate_string('8bit bar ')
+    try:
+        mainloop(disp, args)
+    except KeyboardInterrupt:
+        print()
+        logging.info('Goodbye.')
