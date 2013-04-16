@@ -55,12 +55,12 @@ class SevenSegmentDisplay(object):
         'l': '00001110', 'm': '00000000', 'n': '00010101', 'o': '00011101',
         'O': '01111110', 'ö': '01011101', 'p': '01100111', 'q': '01110011',
         'r': '00000101', 's': '01011011', 't': '00001111', 'u': '00011100',
-        'U': '00111110', 'y': '00110011', 'z': '01101101', ' ': '00000000',
-        '.': '10000000', '-': '00000001', '_': '00001000', '=': '00001001',
-        '!': '10100000',
+        'U': '00111110', 'ü': '01011100', 'y': '00110011', 'z': '01101101',
+        ' ': '00000000', '.': '10000000', '-': '00000001', '_': '00001000',
+        '=': '00001001', '!': '10100000',
     }
 
-    def __init__(self, device='/dev/ttyUSB0', digits=8, timeout=1):
+    def __init__(self, device='/dev/ttyUSB0', digits=8, timeout=0):
         """Initialize a new 7 segment display on a serial port.
 
         Args:
@@ -91,7 +91,6 @@ class SevenSegmentDisplay(object):
 
         # Write to device
         self.ser.write(ascii_frames)
-        self.ser.flush()
 
     def _convert_string(self, string):
         """Take a string as input, return frame."""
