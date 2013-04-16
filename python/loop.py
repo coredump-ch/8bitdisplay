@@ -17,6 +17,7 @@ import os
 import sys
 import logging
 from time import sleep
+from itertools import tee, cycle
 
 from docopt import docopt
 from sevensegment import SevenSegmentDisplay, Segments, Shapes
@@ -49,13 +50,35 @@ class SimpleAnimations(object):
     ]
 
 
-def run_animation(frames, repetitions=1, delay=0.1, digits=8):
+def run_animation(disp, frames, repeat=1, delay=0.1, digits=8):
     """Run an animation on all ``digits`` at the same time with the specified
     ``delay``."""
-    for _ in xrange(repetitions):
+    for _ in xrange(repeat):
         for frame in frames:
             disp.write([frame]*digits)
             sleep(delay)
+
+
+def run_shifted_animation(disp, frames, repeat=1, delay=0.1, digits=8):
+    """Run an animation on all ``digits`` with the specified ``delay``. On each
+    digit, the animation is shifted by 1 frame."""
+
+    # Get multiple independent generators
+    generators = tee(cycle(frames), digits)
+
+    # Shift frames
+    init = digits
+    while init > 0:
+        for frame in generators[:-init]:
+            frame.next()
+        init -= 1
+
+    # Write to display and move each generator to next frame
+    iterations = len(frames) * repeat
+    while iterations > 0:
+        disp.write([generator.next() for generator in generators])
+        sleep(delay)
+        iterations -= 1
 
 
 def mainloop(disp, args):
@@ -76,12 +99,22 @@ def mainloop(disp, args):
         disp.write_string('geil!')
         sleep(1)
 
-        run_animation(SimpleAnimations.circle, 3)
-        run_animation(SimpleAnimations.eight, 3)
-        run_animation(SimpleAnimations.doublecircle, 6)
+        run_animation(disp, SimpleAnimations.circle, 3)
+        run_animation(disp, SimpleAnimations.eight, 3)
+        run_animation(disp, SimpleAnimations.doublecircle, 6)
 
-        #disp.rotate_string('8bit bar ', repeat=2)
-        #disp.rotate_string('Affentittengeil! ', repeat=2)
+        disp.write_string('')
+        sleep(0.5)
+        disp.rotate_string('8bit bar ', repeat=2)
+        disp.write_string('')
+        sleep(0.5)
+        disp.rotate_string('Affentittengeil! ', repeat=2)
+        disp.write_string('')
+        sleep(0.5)
+
+        run_shifted_animation(disp, SimpleAnimations.circle, 3)
+        run_shifted_animation(disp, SimpleAnimations.eight, 3)
+        run_shifted_animation(disp, SimpleAnimations.doublecircle, 6)
 
 
 if __name__ == '__main__':
