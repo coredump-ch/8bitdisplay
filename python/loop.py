@@ -49,6 +49,15 @@ class SimpleAnimations(object):
     ]
 
 
+def run_animation(frames, repetitions=1, delay=0.1, digits=8):
+    """Run an animation on all ``digits`` at the same time with the specified
+    ``delay``."""
+    for _ in xrange(repetitions):
+        for frame in frames:
+            disp.write([frame]*digits)
+            sleep(delay)
+
+
 def mainloop(disp, args):
     logging.info('Entered main loop!')
     while 1:
@@ -61,21 +70,15 @@ def mainloop(disp, args):
         disp.write_string('bits')
         sleep(1)
         disp.write_string('affen')
-        sleep(0.2)
+        sleep(0.3)
         disp.write_string('titten')
-        sleep(0.2)
+        sleep(0.3)
         disp.write_string('geil!')
         sleep(1)
 
-        for frame in SimpleAnimations.circle * 3:
-            disp.write([frame]*8)
-            sleep(0.1)
-        for frame in SimpleAnimations.eight * 3:
-            disp.write([frame]*8)
-            sleep(0.1)
-        for frame in SimpleAnimations.doublecircle * 6:
-            disp.write([frame]*8)
-            sleep(0.1)
+        run_animation(SimpleAnimations.circle, 3)
+        run_animation(SimpleAnimations.eight, 3)
+        run_animation(SimpleAnimations.doublecircle, 6)
 
         #disp.rotate_string('8bit bar ', repeat=2)
         #disp.rotate_string('Affentittengeil! ', repeat=2)
