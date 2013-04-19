@@ -26,7 +26,7 @@ char display_buffer[8];
 
 void setup(){
   lc.shutdown(0,false);
-  lc.setIntensity(0,8);
+  lc.setIntensity(0,15);
   Serial.begin(9600);
 }
 
