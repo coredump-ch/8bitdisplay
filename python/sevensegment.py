@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import
 
-import time
 import logging
+from time import sleep
 from collections import deque
 from itertools import islice
 
@@ -74,7 +74,7 @@ class SevenSegmentDisplay(object):
         """
         self.ser = serial.Serial(device, 9600, timeout=timeout, writeTimeout=timeout)
         self.digits = digits
-        time.sleep(2)  # Wait for serial device to become ready
+        sleep(2)  # Wait for serial device to become ready
 
     def write(self, frames):
         """Write frames to the display. If there are less frames than digits,
@@ -105,28 +105,6 @@ class SevenSegmentDisplay(object):
         frame = self._convert_string(string)
         self.write(frame)
 
-    def rotate_string(self, string, delay=0.2, repeat=-1):
-        """Write a scrolling/rotating string to the display.
-
-        Args:
-            string:
-                The string to write to the display.
-            delay:
-                Delay time between a shift (Default: 0.2).
-            repeat:
-                How many times to repeat the string. Use ``-1`` for infinite
-                scrolling. (Default: -1).
-        """
-        frame = deque(self._convert_string(string))
-        shifts = repeat * len(string) + 1 if repeat > 0 else 1
-        while shifts > 0:
-            length = min(8, len(frame))
-            self.write(list(islice(frame, 0, length)))
-            frame.rotate(-1)
-            time.sleep(delay)
-            if repeat > 0:
-                shifts -= 1
-
     @classmethod
     def get_char(cls, char):
         if char in cls.CHAR_MAP:
@@ -136,3 +114,65 @@ class SevenSegmentDisplay(object):
         else:
             raise RuntimeError('Character mapping for "{}" not found.'.format(char))
         return int(pattern, 2)
+
+
+class SevenSegmentController(object):
+    """Different helper functions to show animations on the display."""
+
+    def __init__(self, disp):
+        self.disp = disp
+
+    def write_string(self, string, duration=1):
+        self.disp.write_string(string)
+        sleep(duration)
+
+    def rotate_string(self, string, delay=0.2, repeat=1):
+        """Write a scrolling string to the display.
+
+        Args:
+            string:
+                The string to write to the display.
+            delay:
+                Delay time between a shift (Default: 0.2).
+            repeat:
+                How many times to repeat the string. Use ``0`` for infinite
+                scrolling. (Default: 1).
+        """
+        frame = deque(self.disp._convert_string(string))
+        shifts = repeat * len(string) + 1 if repeat > 0 else 1
+        while shifts > 0:
+            length = min(8, len(frame))
+            self.disp.write(list(islice(frame, 0, length)))
+            frame.rotate(-1)
+            sleep(delay)
+            if repeat > 0:
+                shifts -= 1
+
+    def run_animation(self, frames, delay=0.1, repeat=1):
+        """Run an animation on all digits at the same time with the specified
+        ``delay``."""
+        for _ in xrange(repeat):
+            for frame in frames:
+                self.disp.write([frame] * self.disp.digits)
+                sleep(delay)
+
+    def run_shifted_animation(self, frames, repeat=1, delay=0.1):
+        """Run an animation on all ``digits`` with the specified ``delay``. On each
+        digit, the animation is shifted by 1 frame."""
+
+        # Get multiple independent generators
+        generators = tee(cycle(frames), digits)
+
+        # Shift frames
+        init = digits
+        while init > 0:
+            for frame in generators[:-init]:
+                frame.next()
+            init -= 1
+
+        # Write to display and move each generator to next frame
+        iterations = len(frames) * repeat
+        while iterations > 0:
+            disp.write([generator.next() for generator in generators])
+            sleep(delay)
+            iterations -= 1

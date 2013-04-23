@@ -20,7 +20,7 @@ from time import sleep
 from itertools import tee, cycle
 
 from docopt import docopt
-from sevensegment import SevenSegmentDisplay, Segments, Shapes
+from sevensegment import SevenSegmentDisplay, SevenSegmentController, Segments, Shapes
 
 
 class SimpleAnimations(object):
@@ -83,34 +83,27 @@ def run_shifted_animation(disp, frames, repeat=1, delay=0.1, digits=8):
 
 def mainloop(disp, args):
     logging.info('Entered main loop!')
+
+    ctrl = SevenSegmentController(disp)
+
     while 1:
-        disp.write_string('8bit bar')
-        sleep(1)
-        disp.write_string('bier')
-        sleep(1)
-        disp.write_string('shots')
-        sleep(1)
-        disp.write_string('bits')
-        sleep(1)
-        disp.write_string('affen')
-        sleep(0.3)
-        disp.write_string('titten')
-        sleep(0.3)
-        disp.write_string('geil!')
-        sleep(1)
+        ctrl.write_string('8bit bar', 1)
+        ctrl.write_string('bier', 1)
+        ctrl.write_string('shots', 1)
+        ctrl.write_string('bits', 1)
+        ctrl.write_string('affen', 0.3)
+        ctrl.write_string('titten', 0.3)
+        ctrl.write_string('geil!', 1)
 
         run_animation(disp, SimpleAnimations.circle, 3)
         run_animation(disp, SimpleAnimations.eight, 3)
         run_animation(disp, SimpleAnimations.doublecircle, 6)
 
-        disp.write_string('')
-        sleep(0.5)
-        disp.rotate_string('8bit bar ', repeat=2)
-        disp.write_string('')
-        sleep(0.5)
-        disp.rotate_string('Affentittengeil! ', repeat=2)
-        disp.write_string('')
-        sleep(0.5)
+        ctrl.write_string('', 0.5)
+        ctrl.rotate_string('8bit bar ', repeat=2)
+        ctrl.write_string('', 0.5)
+        ctrl.rotate_string('Affentittengeil! ', repeat=2)
+        ctrl.write_string('', 0.5)
 
         run_shifted_animation(disp, SimpleAnimations.circle, 3)
         run_shifted_animation(disp, SimpleAnimations.eight, 3)
