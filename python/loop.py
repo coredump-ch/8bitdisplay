@@ -20,7 +20,7 @@ from time import sleep
 from itertools import tee, cycle
 
 from docopt import docopt
-from sevensegment import SevenSegmentDisplay, SevenSegmentController, Segments, Shapes
+from sevensegment import SevenSegmentDisplay, SevenSegmentController, Segments
 
 
 PIDFILE = '7segment.pid'
@@ -53,37 +53,6 @@ class SimpleAnimations(object):
     ]
 
 
-def run_animation(disp, frames, repeat=1, delay=0.1, digits=8):
-    """Run an animation on all ``digits`` at the same time with the specified
-    ``delay``."""
-    for _ in xrange(repeat):
-        for frame in frames:
-            disp.write([frame]*digits)
-            sleep(delay)
-
-
-def run_shifted_animation(disp, frames, repeat=1, delay=0.1, digits=8):
-    """Run an animation on all ``digits`` with the specified ``delay``. On each
-    digit, the animation is shifted by 1 frame."""
-
-    # Get multiple independent generators
-    generators = tee(cycle(frames), digits)
-
-    # Shift frames
-    init = digits
-    while init > 0:
-        for frame in generators[:-init]:
-            frame.next()
-        init -= 1
-
-    # Write to display and move each generator to next frame
-    iterations = len(frames) * repeat
-    while iterations > 0:
-        disp.write([generator.next() for generator in generators])
-        sleep(delay)
-        iterations -= 1
-
-
 def mainloop(disp, args):
     logging.info('Entered main loop!')
 
@@ -98,9 +67,9 @@ def mainloop(disp, args):
         ctrl.write_string('titten', 0.3)
         ctrl.write_string('geil!', 1)
 
-        run_animation(disp, SimpleAnimations.circle, 3)
-        run_animation(disp, SimpleAnimations.eight, 3)
-        run_animation(disp, SimpleAnimations.doublecircle, 6)
+        ctrl.run_animation(SimpleAnimations.circle, repeat=3)
+        ctrl.run_animation(SimpleAnimations.eight, repeat=3)
+        ctrl.run_animation(SimpleAnimations.doublecircle, repeat=6)
 
         ctrl.write_string('', 0.5)
         ctrl.rotate_string('8bit bar ', repeat=2)
@@ -108,9 +77,9 @@ def mainloop(disp, args):
         ctrl.rotate_string('Affentittengeil! ', repeat=2)
         ctrl.write_string('', 0.5)
 
-        run_shifted_animation(disp, SimpleAnimations.circle, 3)
-        run_shifted_animation(disp, SimpleAnimations.eight, 3)
-        run_shifted_animation(disp, SimpleAnimations.doublecircle, 6)
+        ctrl.run_shifted_animation(SimpleAnimations.circle, repeat=3)
+        ctrl.run_shifted_animation(SimpleAnimations.eight, repeat=3)
+        ctrl.run_shifted_animation(SimpleAnimations.doublecircle, repeat=6)
 
 
 if __name__ == '__main__':
@@ -143,9 +112,10 @@ if __name__ == '__main__':
     try:
         mainloop(disp, args)
     except KeyboardInterrupt:
+        print()
+        logging.info('Goodbye.')
+    finally:
         try:
             os.remove(PIDFILE)
         except OSError:
             pass
-        print()
-        logging.info('Goodbye.')
