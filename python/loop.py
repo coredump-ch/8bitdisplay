@@ -23,6 +23,9 @@ from docopt import docopt
 from sevensegment import SevenSegmentDisplay, SevenSegmentController, Segments, Shapes
 
 
+PIDFILE = '7segment.pid'
+
+
 class SimpleAnimations(object):
     """Animations using a single digit."""
     circle = [
@@ -129,11 +132,20 @@ if __name__ == '__main__':
         sys.exit(os.EX_CONFIG)
     logging.basicConfig(level=loglevel)
 
+    # Write PID file
+    pid = str(os.getpid())
+    with open(PIDFILE, 'w') as f:
+        f.write(pid)
+
     # Run main loop
     logging.info('Initializing...')
     disp = SevenSegmentDisplay(device=dev, digits=8)
     try:
         mainloop(disp, args)
     except KeyboardInterrupt:
+        try:
+            os.remove(PIDFILE)
+        except OSError:
+            pass
         print()
         logging.info('Goodbye.')
