@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, division, absolute_import, unicode_literals
 import os
 import signal
 import RPIO
@@ -27,12 +28,12 @@ if __name__ == '__main__':
         PID = int(f.read())
 
     callback = send_signal_to(PID)
-    RPIO.add_interrupt_callback(INPUT_PIN, callback, edge='rising', debounce_timeout_ms=150)
+    RPIO.add_interrupt_callback(INPUT_PIN, callback, edge='rising', debounce_timeout_ms=200)
 
     try:
         RPIO.wait_for_interrupts()
     except KeyboardInterrupt:
-        print 'exiting'
+        print('exiting')
     finally:
-        print 'cleaning up'
+        print('cleaning up')
         RPIO.cleanup()

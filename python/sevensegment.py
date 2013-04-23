@@ -4,7 +4,7 @@ from __future__ import print_function, division, absolute_import
 import logging
 from time import sleep
 from collections import deque
-from itertools import islice
+from itertools import tee, cycle, islice
 
 import serial
 
@@ -161,10 +161,10 @@ class SevenSegmentController(object):
         digit, the animation is shifted by 1 frame."""
 
         # Get multiple independent generators
-        generators = tee(cycle(frames), digits)
+        generators = tee(cycle(frames), self.disp.digits)
 
         # Shift frames
-        init = digits
+        init = self.disp.digits
         while init > 0:
             for frame in generators[:-init]:
                 frame.next()
@@ -173,6 +173,6 @@ class SevenSegmentController(object):
         # Write to display and move each generator to next frame
         iterations = len(frames) * repeat
         while iterations > 0:
-            disp.write([generator.next() for generator in generators])
+            self.disp.write([generator.next() for generator in generators])
             sleep(delay)
             iterations -= 1

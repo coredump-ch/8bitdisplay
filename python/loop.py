@@ -15,9 +15,9 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import sys
+import time
+import signal
 import logging
-from time import sleep
-from itertools import tee, cycle
 
 from docopt import docopt
 from sevensegment import SevenSegmentDisplay, SevenSegmentController, Segments
@@ -82,6 +82,17 @@ def mainloop(disp, args):
         ctrl.run_shifted_animation(SimpleAnimations.doublecircle, repeat=6)
 
 
+def get_counter(disp):
+    global count  # TODO ugly hack, remove
+    count = 0
+    def count_up(signum, frame):
+        global count
+        count += 1
+        disp.write_string(str(count))
+        time.sleep(1)
+    return count_up
+
+
 if __name__ == '__main__':
 
     # Parse arguments
@@ -101,14 +112,19 @@ if __name__ == '__main__':
         sys.exit(os.EX_CONFIG)
     logging.basicConfig(level=loglevel)
 
+    # Initialize display
+    logging.info('Initializing...')
+    disp = SevenSegmentDisplay(device=dev, digits=8)
+
     # Write PID file
     pid = str(os.getpid())
     with open(PIDFILE, 'w') as f:
         f.write(pid)
 
+    # Register signal handlers
+    signal.signal(signal.SIGUSR1, get_counter(disp))
+
     # Run main loop
-    logging.info('Initializing...')
-    disp = SevenSegmentDisplay(device=dev, digits=8)
     try:
         mainloop(disp, args)
     except KeyboardInterrupt:
