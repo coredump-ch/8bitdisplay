@@ -2,3 +2,4 @@ pyserial==2.6
 RPIO==0.10.0
 docopt==0.6.1
 cleverbot==0.1.1
+termcolor==1.1.0
