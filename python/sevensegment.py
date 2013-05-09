@@ -126,7 +126,7 @@ class SevenSegmentController(object):
         self.disp.write_string(string)
         sleep(duration)
 
-    def rotate_string(self, string, delay=0.2, repeat=1):
+    def scroll_string(self, string, delay=0.2, repeat=1):
         """Write a scrolling string to the display.
 
         Args:
@@ -138,8 +138,23 @@ class SevenSegmentController(object):
                 How many times to repeat the string. Use ``0`` for infinite
                 scrolling. (Default: 1).
         """
-        frame = deque(self.disp._convert_string(string))
-        shifts = repeat * len(string) + 1 if repeat > 0 else 1
+        padding = ' ' * self.disp.digits
+
+        # Prepare frames as double ended queues (for rotating)
+        preframe = deque(self.disp._convert_string(padding + string))
+        frame = deque(self.disp._convert_string(string + padding))
+
+        # Shift text in
+        for _ in xrange(self.disp.digits):
+            self.disp.write(list(islice(preframe, 0, self.disp.digits)))
+            preframe.rotate(-1)
+            sleep(delay)
+
+        # Main shift loop
+        if repeat > 0:
+            shifts = repeat * len(frame) + 1 - self.disp.digits
+        else:
+            shifts = 1
         while shifts > 0:
             length = min(8, len(frame))
             self.disp.write(list(islice(frame, 0, length)))
