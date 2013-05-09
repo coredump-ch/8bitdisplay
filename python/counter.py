@@ -5,7 +5,7 @@ import signal
 import RPIO
 
 
-INPUT_PIN = 16
+INPUT_PIN = 3
 PIDFILE = '7segment.pid'
 
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # Set up GPIO pins
     RPIO.setmode(RPIO.BOARD)
-    RPIO.setup(INPUT_PIN, RPIO.IN)
+    RPIO.setup(INPUT_PIN, RPIO.IN, pull_up_down=RPIO.PUD_DOWN)
 
     # Find PID of 7segment process
     with open(PIDFILE, 'r') as f:
