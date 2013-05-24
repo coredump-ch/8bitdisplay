@@ -72,9 +72,9 @@ def mainloop(disp, args):
         ctrl.run_animation(SimpleAnimations.doublecircle, repeat=6)
 
         ctrl.write_string('', 0.5)
-        ctrl.rotate_string('8bit bar ', repeat=2)
+        ctrl.scroll_string('8bit bar ', repeat=2)
         ctrl.write_string('', 0.5)
-        ctrl.rotate_string('Affentittengeil! ', repeat=2)
+        ctrl.scroll_string('Affentittengeil! ', repeat=2)
         ctrl.write_string('', 0.5)
 
         ctrl.run_shifted_animation(SimpleAnimations.circle, repeat=3)
