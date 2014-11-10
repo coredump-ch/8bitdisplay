@@ -105,11 +105,9 @@ static void print_coredump() {
     lc.setRow(ADDR, 0, CHAR_p);
 }
 
-char snake_segments_odd[] = {SEGM_SW, SEGM_NW, SEGM_N};
-char snake_segments_even[] = {SEGM_NW, SEGM_SW, SEGM_S};
-char i, digit;
 
 #define SNAKE_DELAY 100
+char i, digit;
 static void print_snake(char nof_loops) {
     Serial.println("Printing snake...");
     lc.clearDisplay(ADDR);
