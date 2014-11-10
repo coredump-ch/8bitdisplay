@@ -1,11 +1,11 @@
 #include "LedControl.h"
-#include <src/charmap.h>
+#include <src/segments.h>
 #define DIN 11
 #define CS 12
 #define CLOCK 13
 #define ADDR 0
 
-#define SERIAL_INTERFACE false
+#define SERIAL_LOOP false
 
 /*
 Segment numbering:
@@ -29,13 +29,15 @@ To display a one "1", you need to light up segments 5,6 => in binary: 0b00110000
 
 LedControl lc = LedControl(DIN,CLOCK,CS,1); 
 char display_buffer[8];
+long randomNumber;
 
 
 // Function declarations
 
-static void print8bit();
-static void printCoredump();
-static void printBuffer();
+static void print_8bit();
+static void print_coredump();
+static void print_buffer();
+static void print_snake(char);
 
 
 // Setup & Loop
@@ -43,21 +45,29 @@ static void printBuffer();
 void setup() {
     lc.shutdown(0,false);
     lc.setIntensity(0,15);
-#ifdef SERIAL_INTERFACE
     Serial.begin(9600);
-#endif
+
+    // if analog input pin 0 is unconnected, random analog
+    // noise will cause the call to randomSeed() to generate
+    // different seed numbers each time the sketch runs.
+    // randomSeed() will then shuffle the random function.
+    randomSeed(analogRead(0));
 }
 
 void loop() {
-    printCoredump();
-
-#ifdef SERIAL_INTERFACE
     Serial.println("8bit Display is ready!");
+
+    print_coredump();
+    delay(random(3000, 30000));  // Sleep between 3s and 30s
+    print_snake(random(3, 5));  // Do 3 to 5 loops
+
+#if (SERIAL_LOOP == true)
+    Serial.println("Waiting for serial commands...");
     while (1){
         if (Serial.available() >= 8){
             Serial.readBytes(display_buffer, 8);
             Serial.print("New string received: ");
-            printBuffer();
+            print_buffer();
         }
     }
 #endif
@@ -65,8 +75,7 @@ void loop() {
 
 
 // Output functions
-
-void print8bit() {
+static void print_8bit() {
     lc.setDigit(ADDR, 7, 8, false);
     lc.setRow(ADDR, 6, 0b000011111);
     lc.setRow(ADDR, 5, 0b100);
@@ -77,14 +86,15 @@ void print8bit() {
     lc.setRow(ADDR, 0, 0b101);
 }
 
-void printBuffer() {
+static void print_buffer() {
     for(int i =7; i>=0; --i){
         lc.setRow(0, i, display_buffer[7-i]);
         Serial.write(display_buffer[7-i]);
     }
 }
 
-void printCoredump() {
+static void print_coredump() {
+    lc.clearDisplay(ADDR);
     lc.setRow(ADDR, 7, CHAR_C);
     lc.setRow(ADDR, 6, CHAR_o);
     lc.setRow(ADDR, 5, CHAR_r);
@@ -93,4 +103,52 @@ void printCoredump() {
     lc.setRow(ADDR, 2, CHAR_u);
     lc.setRow(ADDR, 1, CHAR_m);
     lc.setRow(ADDR, 0, CHAR_p);
+}
+
+char snake_segments_odd[] = {SEGM_SW, SEGM_NW, SEGM_N};
+char snake_segments_even[] = {SEGM_NW, SEGM_SW, SEGM_S};
+char i, digit;
+
+#define SNAKE_DELAY 100
+static void print_snake(char nof_loops) {
+    Serial.println("Printing snake...");
+    lc.clearDisplay(ADDR);
+
+    for (i = 0; i < nof_loops; i++) {
+        for (digit = 7; digit >= 0; digit--) {
+            Serial.print("Digit is ");
+            Serial.print((char)(((int)'0')+digit));
+            Serial.print("\n\r");
+            if (digit % 2 == 1) {
+                lc.setRow(ADDR, digit, SEGM_SW);
+                delay(SNAKE_DELAY);
+
+                if (digit == 7) {
+                    lc.setRow(ADDR, 0, SEGM_CLEAR);
+                } else {
+                    lc.setRow(ADDR, digit + 1, SEGM_CLEAR);
+                }
+                lc.setRow(ADDR, digit, SEGM_SW | SEGM_NW);
+                delay(SNAKE_DELAY);
+
+                lc.setRow(ADDR, digit, SEGM_NW | SEGM_N);
+                delay(SNAKE_DELAY);
+
+                lc.setRow(ADDR, digit, SEGM_N);
+            } else {
+                lc.setRow(ADDR, digit, SEGM_NW);
+                delay(SNAKE_DELAY);
+
+                lc.setRow(ADDR, digit + 1, SEGM_CLEAR);
+                lc.setRow(ADDR, digit, SEGM_NW | SEGM_SW);
+                delay(SNAKE_DELAY);
+
+                lc.setRow(ADDR, digit, SEGM_SW | SEGM_S);
+                delay(SNAKE_DELAY);
+
+                lc.setRow(ADDR, digit, SEGM_S);
+            }
+        }
+    }
+    Serial.println("Snake done.");
 }

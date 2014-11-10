@@ -19,6 +19,16 @@ To display a one "1", you need to light up segments 5,6
 
 */
 
+#define SEGM_CLEAR 0b00000000
+#define SEGM_N 0b01000000
+#define SEGM_NW 0b00000010
+#define SEGM_NE 0b00100000
+#define SEGM_SW 0b00000100
+#define SEGM_MID 0b00000001
+#define SEGM_SE 0b00010000
+#define SEGM_S 0b00001000
+#define SEGM_DOT 0b10000000
+
 #define CHAR_0 0b01111110
 #define CHAR_1 0b00110000
 #define CHAR_2 0b01101101
