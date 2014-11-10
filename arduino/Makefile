@@ -17,4 +17,7 @@ LOCAL_PDE_SRCS ?= $(wildcard src/*.pde)
 LOCAL_INO_SRCS ?= $(wildcard src/*.ino)
 LOCAL_AS_SRCS  ?= $(wildcard src/*.s)
 
+# Compiler config
+CFLAGS_STD = -std=c11
+
 include arduino-makefile/Arduino.mk
