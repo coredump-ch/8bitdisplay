@@ -1,5 +1,5 @@
-#include "LedControl.h"
-#include <src/segments.h>
+#include <LedControl.h>
+#include "segments.h"
 #define DIN 11
 #define CS 12
 #define CLOCK 13
