@@ -40,6 +40,7 @@ static void print_buffer();
 static void print_snake(char);
 static void print_number(unsigned long number);
 static void print_count_up();
+static void print_internet();
 
 
 // Setup & Loop
@@ -67,25 +68,33 @@ void loop() {
     print_snake(random(3, 5));  // Do 3 to 5 loops
     */
 
-    static unsigned long last_count = 0;
-    static unsigned long count = 0;
+    enum State {
+        Init,
+        On,
+        Off,
+    };
+
+    static State state = Init;
     static int old_switch = 1;
     int new_switch = digitalRead(2);
-
-    if (old_switch == 1 && new_switch == 0) {
-        count++;
-        lc.clearDisplay(ADDR);
-        last_count = millis();
-    }
+    bool flank = old_switch == 1 && new_switch == 0;
     old_switch = new_switch;
 
-    if ((millis() - last_count) > 6000) {
-        lc.clearDisplay(ADDR);
-        last_count = millis();
-    } else if ((millis() - last_count) > 3000) {
-        print_count_up();
-    } else {
-        print_number(count);
+    switch (state) {
+        case Init:
+            print_internet();
+            state = On;
+        case On:
+            if (flank) {
+                state = Off;
+                lc.clearDisplay(ADDR);
+            }
+            break;
+        case Off:
+            if (flank) {
+                state = Init;
+            }
+            break;
     }
 
 #if (SERIAL_LOOP == true)
@@ -142,6 +151,18 @@ static void print_count_up() {
     lc.setRow(ADDR, 2, CHAR_SPACE);
     lc.setRow(ADDR, 1, CHAR_u);
     lc.setRow(ADDR, 0, CHAR_p);
+}
+
+static void print_internet() {
+    lc.clearDisplay(ADDR);
+    lc.setRow(ADDR, 7, CHAR_I);
+    lc.setRow(ADDR, 6, CHAR_n);
+    lc.setRow(ADDR, 5, CHAR_t);
+    lc.setRow(ADDR, 4, CHAR_e);
+    lc.setRow(ADDR, 3, CHAR_r);
+    lc.setRow(ADDR, 2, CHAR_n);
+    lc.setRow(ADDR, 1, CHAR_e);
+    lc.setRow(ADDR, 0, CHAR_t);
 }
 
 static void print_number(unsigned long number) {
