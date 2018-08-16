@@ -38,6 +38,7 @@ static void print_8bit();
 static void print_coredump();
 static void print_buffer();
 static void print_snake(char);
+static void print_number(unsigned number);
 
 
 // Setup & Loop
@@ -46,6 +47,8 @@ void setup() {
     lc.shutdown(0,false);
     lc.setIntensity(0,15);
     Serial.begin(9600);
+
+    pinMode(2,INPUT_PULLUP);
 
     // if analog input pin 0 is unconnected, random analog
     // noise will cause the call to randomSeed() to generate
@@ -57,9 +60,23 @@ void setup() {
 void loop() {
     Serial.println("8bit Display is ready!");
 
+    /*
     print_coredump();
     delay(random(3000, 30000));  // Sleep between 3s and 30s
     print_snake(random(3, 5));  // Do 3 to 5 loops
+    */
+
+    static unsigned count = 0;
+    static int old_switch = 1;
+    int new_switch = digitalRead(2);
+
+    if (old_switch == 1 && new_switch == 0) {
+        count++;
+    }
+    old_switch = new_switch;
+
+    lc.clearDisplay(ADDR);
+    print_number(count);
 
 #if (SERIAL_LOOP == true)
     Serial.println("Waiting for serial commands...");
@@ -103,6 +120,16 @@ static void print_coredump() {
     lc.setRow(ADDR, 2, CHAR_u);
     lc.setRow(ADDR, 1, CHAR_m);
     lc.setRow(ADDR, 0, CHAR_p);
+}
+
+static void print_number(unsigned number) {
+    for(int i=0; i<8; ++i) {
+        lc.setDigit(ADDR, i, number%10, false);
+        number /= 10;
+        if (number == 0) {
+            break;
+        }
+    }
 }
 
 
