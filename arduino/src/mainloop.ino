@@ -38,7 +38,7 @@ static void print_8bit();
 static void print_coredump();
 static void print_buffer();
 static void print_snake(char);
-static void print_number(unsigned number);
+static void print_number(unsigned long number);
 static void print_count_up();
 
 
@@ -68,7 +68,7 @@ void loop() {
     */
 
     static unsigned long last_count = 0;
-    static unsigned count = 0;
+    static unsigned long count = 0;
     static int old_switch = 1;
     int new_switch = digitalRead(2);
 
@@ -144,7 +144,7 @@ static void print_count_up() {
     lc.setRow(ADDR, 0, CHAR_p);
 }
 
-static void print_number(unsigned number) {
+static void print_number(unsigned long number) {
     for(int i=0; i<8; ++i) {
         lc.setDigit(ADDR, i, number%10, false);
         number /= 10;
