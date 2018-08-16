@@ -40,6 +40,8 @@ static void print_buffer();
 static void print_snake(char);
 static void print_number(unsigned long number);
 static void print_count_up();
+static void print_press_it();
+static void print_random();
 
 
 // Setup & Loop
@@ -56,10 +58,12 @@ void setup() {
     // different seed numbers each time the sketch runs.
     // randomSeed() will then shuffle the random function.
     randomSeed(analogRead(0));
+
+    lc.clearDisplay(ADDR);
 }
 
 void loop() {
-    Serial.println("8bit Display is ready!");
+    //Serial.println("8bit Display is ready!");
 
     /*
     print_coredump();
@@ -67,26 +71,50 @@ void loop() {
     print_snake(random(3, 5));  // Do 3 to 5 loops
     */
 
-    static unsigned long last_count = 0;
+    enum State {
+        GotoShowNumber,
+        ShowNumber,
+        GotoShowMessage,
+        ShowMessage,
+    };
+    static State state = GotoShowNumber;
+    static unsigned long timer_start = 0;
     static unsigned long count = 0;
     static int old_switch = 1;
-    int new_switch = digitalRead(2);
 
-    if (old_switch == 1 && new_switch == 0) {
-        count++;
-        lc.clearDisplay(ADDR);
-        last_count = millis();
-    }
+    int new_switch = digitalRead(2);
+    bool flank = old_switch == 1 && new_switch == 0;
     old_switch = new_switch;
 
-    if ((millis() - last_count) > 6000) {
-        lc.clearDisplay(ADDR);
-        last_count = millis();
-    } else if ((millis() - last_count) > 3000) {
-        print_count_up();
-    } else {
-        print_number(count);
+    if (flank) {
+        count++;
+        state = GotoShowNumber;
     }
+
+    switch (state) {
+        case GotoShowNumber:
+            print_number(count);
+            state = ShowNumber;
+            timer_start = millis();
+            break;
+        case ShowNumber:
+            if ((millis() - timer_start) > 3000) {
+                state = GotoShowMessage;
+            }
+            break;
+
+        case GotoShowMessage:
+            print_random();
+            state = ShowMessage;
+            timer_start = millis();
+            break;
+        case ShowMessage:
+            if ((millis() - timer_start) > 3000) {
+                state = GotoShowNumber;
+            }
+            break;
+    }
+    delay(10);
 
 #if (SERIAL_LOOP == true)
     Serial.println("Waiting for serial commands...");
@@ -132,6 +160,32 @@ static void print_coredump() {
     lc.setRow(ADDR, 0, CHAR_p);
 }
 
+static void print_random() {
+    switch (random() % 3) {
+        case 0:
+            print_coredump();
+            break;
+        case 1:
+            print_count_up();
+            break;
+        case 2:
+            print_press_it();
+            break;
+    }
+}
+
+static void print_press_it() {
+    lc.clearDisplay(ADDR);
+    lc.setRow(ADDR, 7, CHAR_p);
+    lc.setRow(ADDR, 6, CHAR_r);
+    lc.setRow(ADDR, 5, CHAR_e);
+    lc.setRow(ADDR, 4, CHAR_s);
+    lc.setRow(ADDR, 3, CHAR_s);
+    lc.setRow(ADDR, 2, CHAR_SPACE);
+    lc.setRow(ADDR, 1, CHAR_i);
+    lc.setRow(ADDR, 0, CHAR_t);
+}
+
 static void print_count_up() {
     lc.clearDisplay(ADDR);
     lc.setRow(ADDR, 7, CHAR_C);
@@ -146,10 +200,11 @@ static void print_count_up() {
 
 static void print_number(unsigned long number) {
     for(int i=0; i<8; ++i) {
-        lc.setDigit(ADDR, i, number%10, false);
-        number /= 10;
-        if (number == 0) {
-            break;
+        if (number == 0 && i != 0) {
+            lc.setRow(ADDR, i, CHAR_SPACE);
+        } else {
+            lc.setDigit(ADDR, i, number%10, false);
+            number /= 10;
         }
     }
 }
